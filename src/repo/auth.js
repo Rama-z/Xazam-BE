@@ -78,10 +78,11 @@ const register = (body) => {
     });
   });
 };
+
 const login = (body) => {
   return new Promise((resolve, reject) => {
     const { email, password } = body;
-    const getEmail = `SELECT u.id, u.email, r.name, u.status, u.password from users u left join roles r on u.roles_id = r.id where email like $1`;
+    const getEmail = `SELECT u.id, u.email, r.name as role, u.status, u.password from users u left join roles r on u.roles_id = r.id where email like $1`;
     db.query(getEmail, [email], (err, response) => {
       if (err) {
         console.log(err);
@@ -108,8 +109,90 @@ const login = (body) => {
             issuer: process.env.ISSUER,
           })
           .then((token) => {
-            return resolve(userLogin(payload));
+            const sendData = {
+              user_id: response.rows[0].id,
+              email,
+              role: response.rows[0].role,
+              token: token,
+            };
+            return resolve(userLogin(sendData));
           });
+      });
+    });
+  });
+};
+
+const logout = (token) => {
+  return new Promise((resolve, reject) => {
+    const jwtr = new JWTR(client);
+    jwtr.destroy(token.jti).then((res) => {
+      if (!res) resolve(unauthorized());
+      console.log(res);
+      resolve(success("Success logout account"));
+    });
+  });
+};
+
+const resetpassword = (body) => {
+  return new Promise((resolve) => {
+    const { email, linkDirect } = body;
+    const validasiEmail = `select users from users where email like $1`;
+    db.query(validasiEmail, [email], (err, resEmail) => {
+      if (err) {
+        console.log(err);
+        return resolve(systemError());
+      }
+      if (resEmail.rows.length === 0) return resolve(wrongData());
+      const digits = "0123456789";
+      let OTP = "";
+      for (let i = 0; i < 6; i++) {
+        OTP += digits[Math.floor(Math.random() * 10)];
+      }
+      sendMails({
+        to: email,
+        OTP: OTP,
+        link: `${linkDirect}/${OTP}`,
+      }).then((result) => {
+        client
+          .set(OTP, email, {
+            EX: 120,
+            NX: true,
+          })
+          .then(() => {
+            const data = {
+              message: "Check your email for get link reset-password",
+            };
+            resolve(success(data));
+          });
+      });
+    });
+  });
+};
+
+const confirmReset = (body) => {
+  return new Promise((resolve) => {
+    const { pincode, newPassword } = body;
+    client.get(pincode).then((results) => {
+      if (!results)
+        return resolve(
+          custMsg("Your keys is not valid, please repeat step forgot password")
+        );
+      bcrypt.hash(newPassword, 10, (err, newHashedPassword) => {
+        if (err) {
+          console.log(err);
+          return resolve(systemError());
+        }
+        const editPwdQuery =
+          "UPDATE users SET password = $1, updated_at = now() WHERE email = $2";
+        const editPwdValues = [newHashedPassword, results];
+        db.query(editPwdQuery, editPwdValues, (err, response) => {
+          if (err) {
+            console.log(err);
+            return resolve(systemError());
+          }
+          client.del(pincode);
+          resolve(success(null));
+        });
       });
     });
   });
@@ -118,6 +201,9 @@ const login = (body) => {
 const authRepo = {
   register,
   login,
+  logout,
+  resetpassword,
+  confirmReset,
 };
 
 module.exports = authRepo;

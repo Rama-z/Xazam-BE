@@ -51,7 +51,7 @@ mainRouter.get("/verify/:id", function (req, res) {
                 msg: "System Error !",
               });
             }
-            // client.del(req.params.id);
+            client.del(req.params.id);
             // res.status(200).send("<h1>Email  is been Successfully verified");
             res.status(200).send(`
           <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%">

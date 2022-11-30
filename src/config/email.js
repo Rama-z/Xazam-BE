@@ -26,10 +26,9 @@ module.exports.sendMails = async (params) => {
           class="container"
           style="max-width: 90%; margin: auto; padding-top: 20px"
         >
-          <h2>Hi ${params.name}.</h2>
-          <h4>This Is Your Code Verification</h4>
-          <p style="margin-bottom: 30px;">Please enter the OTP on input to reset your password</p>
-          <h1 style="font-size: 40px; letter-spacing: 2px; text-align:center;">${params.OTP}</h1>
+          <h2>Hi.</h2>
+          <h4>This Is Your Link For Change Your Password</h4>
+          <p style="margin-bottom: 30px;">Need to reset your password? just click <a href="${params.link}">Here</a> to reset Password. your password</p>
      </div>
       `,
     });
