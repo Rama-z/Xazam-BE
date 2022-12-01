@@ -10,14 +10,15 @@ const client = require("../config/redis");
 // const reviewsRouter = require("./reviews");
 // const transactionRouter = require("./transactions");
 // const favoriteRouter = require("./favorite");
+const prefix = "/api/xazam";
 
-mainRouter.use(`/auth`, authRouter);
-// mainRouter.use(`/profile`, profileRouter);
-// mainRouter.use(`/product`, productRouter);
-// mainRouter.use(`/promo`, promoRouter);
-// mainRouter.use(`/reviews`, reviewsRouter);
-// mainRouter.use(`/transaction`, transactionRouter);
-// mainRouter.use(`/favorite`, favoriteRouter);
+mainRouter.use(`${prefix}/auth`, authRouter);
+// mainRouter.use(`${prefix}/profile`, profileRouter);
+// mainRouter.use(`${prefix}/product`, productRouter);
+// mainRouter.use(`${prefix}/promo`, promoRouter);
+// mainRouter.use(`${prefix}/reviews`, reviewsRouter);
+// mainRouter.use(`${prefix}/transaction`, transactionRouter);
+// mainRouter.use(`${prefix}/favorite`, favoriteRouter);
 
 mainRouter.get("/", (req, res) => {
   res.json({
