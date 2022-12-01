@@ -11,7 +11,7 @@ server.use(express.urlencoded({ extended: false }));
 server.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
 );
-server.use(mainRouter);
+server.use(mainRouter.get);
 server.listen(8080, () => {
   console.log(`Server is running at port 8080`);
 });
