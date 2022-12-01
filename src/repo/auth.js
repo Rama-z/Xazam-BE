@@ -89,7 +89,7 @@ const login = (body) => {
         return resolve(wrongData());
       }
       if (response.rows.length === 0) return resolve(wrongData());
-      if (response.rows[0].status === "pending")
+      if (response.rows[0].status === "inverfied")
         return resolve(custMsg("Account not active"));
       const hashedPassword = response.rows[0].password;
       bcrypt.compare(password, hashedPassword, (err, isSame) => {
