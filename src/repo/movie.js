@@ -1,24 +1,15 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const JWTR = require("jwt-redis").default;
 const db = require("../config/database");
-const client = require("../config/redis");
-const response = require("../helpers/response");
-const jwtr = new JWTR(client);
-const { sendVerifMail, sendMails } = require("../config/email");
 const {
   success,
   systemError,
   created,
-  emailreadyexsits,
-  wrongData,
-  userLogin,
   custMsg,
+  invalidParameter,
 } = require("../helpers/templateResponse");
 
 const getMovies = (params) => {
   return new Promise((resolve) => {
-    const query = `select m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast, s.name as studios, t.times as time from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
+    const query = `select m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast, s.name as studios, t.times as time from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
         join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id  join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id where m.id = $1`;
     db.query(query, [params], (err, result) => {
       if (err) {
@@ -26,6 +17,7 @@ const getMovies = (params) => {
         resolve(systemError());
       }
       //   console.log(result);
+      let id = null;
       let name = null;
       let image = null;
       let relase_date = null;
@@ -56,6 +48,7 @@ const getMovies = (params) => {
             }
           });
         }
+        if (data.id !== id) id = data.id;
         if (data.name !== name) name = data.name;
         if (data.image !== image) image = data.image;
         if (data.relase_date !== relase_date) relase_date = data.relase_date;
@@ -64,6 +57,7 @@ const getMovies = (params) => {
         if (data.director !== director) director = data.director;
       });
       const data = {
+        id,
         name,
         image,
         relase_date,
@@ -73,8 +67,6 @@ const getMovies = (params) => {
         category,
         cast,
         showtimes,
-        // studios,
-        // time,
       };
       resolve(success(data));
     });
@@ -83,45 +75,14 @@ const getMovies = (params) => {
 
 const getallMovies = (body) => {
   return new Promise((resolve) => {
-    const query = `select m.name as title, m.image, c."name" as category from movies m left join categoriey_movie cm on m.id  = cm.movies_id join category c on cm.category_id = c.id`;
+    const query = `select distinct m.id,m.name, m.image, string_agg(distinct (c."name") , ', ')category from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
+    join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id  join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name" ,s."name" ,t.times `;
     db.query(query, (err, results) => {
       if (err) {
         console.log(err.message);
         resolve(systemError());
       }
-      let data = [];
-      results.rows.forEach((datas) => {
-        if (data.length !== 0) {
-          data.forEach((forGenre) => {
-            if (forGenre["title"] === datas.title) {
-              return forGenre["genre"].push(datas.category);
-            }
-            return;
-          });
-        }
-        if (data.length === 0) {
-          const addData = {
-            title: datas.title,
-            image: datas.image,
-            genre: [datas.category],
-          };
-          data.push(addData);
-        }
-        const checkdata = data.some((item) => item.title === datas.title);
-        if (!checkdata) {
-          data.forEach((forGenre) => {
-            if (forGenre["title"] !== datas.title) {
-              const addData = {
-                title: datas.title,
-                image: datas.image,
-                genre: [datas.category],
-              };
-              return data.push(addData);
-            }
-          });
-        }
-      });
-      resolve(success(data));
+      resolve(success(results.rows));
     });
   });
 };
@@ -129,65 +90,47 @@ const getallMovies = (body) => {
 const getShowMovies = (params) => {
   return new Promise((resolve) => {
     const { month } = params;
-    const query = `select m.name as title, m.image, c."name" as category, TO_CHAR(m.relase_date , 'DD/MM/YYYY') as date from movies m left join categoriey_movie cm on m.id  = cm.movies_id join category c on cm.category_id = c.id`;
+    const query = `select distinct m.id, m.name, m.image, string_agg(distinct (c."name") , ',')category,TO_CHAR(m.relase_date , 'DD/MM/YYYY') as date from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id  join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name" ,s."name" ,t.times`;
     db.query(query, (err, results) => {
       if (err) {
         console.log(err.message);
         resolve(systemError());
       }
-      let data = [];
-      results.rows.forEach((datas) => {
-        if (data.length !== 0) {
-          data.forEach((forGenre) => {
-            if (forGenre["title"] === datas.title) {
-              return forGenre["genre"].push(datas.category);
-            }
-            return;
-          });
-        }
-        if (data.length === 0) {
-          const addData = {
-            title: datas.title,
-            image: datas.image,
-            genre: [datas.category],
-            date: datas.date,
-          };
-          data.push(addData);
-        }
-        const checkdata = data.some((item) => item.title === datas.title);
-        if (!checkdata) {
-          data.forEach((forGenre) => {
-            if (forGenre["title"] !== datas.title) {
-              const addData = {
-                title: datas.title,
-                image: datas.image,
-                genre: [datas.category],
-                date: datas.date,
-              };
-              return data.push(addData);
-            }
-          });
-        }
-      });
       let nowShowing = [];
       let upComing = [];
       let today = new Date();
       let dd = String(today.getDate()).padStart(2, "0");
       let mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
       let yyyy = today.getFullYear();
+      // today = yyyy + "/" + mm + "/" + dd;
       today = dd + "/" + mm + "/" + yyyy;
-      data.some((item) => {
-        if (item.date === today) {
-          nowShowing.push({ item });
+      results.rows.some((data) => {
+        if (data.date === today) {
+          nowShowing.push(data);
         }
-        const monthData = item.date.split("/")[1];
-        if (month) {
-          if (month === monthData) {
-            upComing.push({ item });
+        // const monthData = data.date.split("/")[1];
+        let someday = new Date();
+        someday.setFullYear(
+          data.date.split("/")[2],
+          data.date.split("/")[1],
+          data.date.split("/")[0]
+        );
+        let now = new Date();
+        now.setDate(now.getDate() + 1);
+        const date = now < someday;
+        if (date) {
+          if (month) {
+            if (data.date.split("/")[1] === month) {
+              nowShowing.forEach((dataNow) => {
+                if (dataNow.name !== data.name) upComing.push(data);
+              });
+            }
           }
-        }
-        if (!month) {
-          upComing.push({ item });
+          if (!month) {
+            nowShowing.forEach((dataNow) => {
+              if (dataNow.name !== data.name) upComing.push(data);
+            });
+          }
         }
       });
       const senData = {
@@ -199,10 +142,212 @@ const getShowMovies = (params) => {
   });
 };
 
+const createMovie = (body, file, movie_id) => {
+  return new Promise((resolve, reject) => {
+    db.connect((err, client, done) => {
+      const shouldAbort = (err) => {
+        if (err) {
+          console.error("Error in Created", err.stack);
+          resolve(invalidParameter());
+          client.query("ROLLBACK", (err) => {
+            if (err) {
+              console.log(systemError(err.stack));
+              resolve(systemError(err.stack));
+            }
+            done();
+          });
+        }
+        return !!err;
+      };
+      client.query("BEGIN", (err) => {
+        if (shouldAbort(err)) return;
+        const {
+          title,
+          category,
+          date,
+          duration,
+          director,
+          casts,
+          synopsis,
+          showtimes,
+        } = body;
+        if (
+          !title ||
+          !category ||
+          !date ||
+          !duration ||
+          !director ||
+          !casts ||
+          !synopsis ||
+          !showtimes
+        )
+          return resolve(custMsg("All data must be filled"));
+        const insertMovie = `insert into movies (id,name, relase_date, duration, synopsis, image) values ($1,$2,$3,$4,$5,$6) RETURNING id`;
+        client.query(
+          insertMovie,
+          [movie_id, title, date, duration, synopsis, file.url],
+          (err, resMovie) => {
+            // console.log("Movie");
+            if (shouldAbort(err)) return;
+            // console.log("Movie Selesai");
+            const insertDirector = `insert into "director" (movies_id,name) values ($1,$2) RETURNING id`;
+            client.query(
+              insertDirector,
+              [movie_id, director],
+              (err, resDirect) => {
+                // console.log("dircet");
+                if (shouldAbort(err)) return;
+                // console.log("dircet selesai");
+                const direct_id = resDirect.rows[0].id;
+                const insertCasts = `insert into "cast"(movies_id, name) values ($1, $2)`;
+                casts.split(",").forEach((dataCasts) => {
+                  client.query(
+                    insertCasts,
+                    [movie_id, dataCasts],
+                    (err, resCast) => {
+                      // console.log("cast");
+                      if (shouldAbort(err)) return;
+                      // console.log("cast selesai");
+                    }
+                  );
+                });
+                const insertCategory = `insert into "categoriey_movie" (movies_id,category_id) values ($1,$2)`;
+                category.split(",").forEach((dataCtg) => {
+                  client.query(
+                    insertCategory,
+                    [movie_id, dataCtg],
+                    (err, resCategory) => {
+                      // console.log("ctgM");
+                      if (shouldAbort(err)) return;
+                      // console.log("ctgM Selesai");
+                    }
+                  );
+                });
+                const instertStudios = `insert into "times_studio_movies"(movies_id,studios_id,times_id) values ($1,$2,$3)`;
+                const objectStringArray = new Function(
+                  "return [" + showtimes + "];"
+                )();
+                objectStringArray.forEach((dataPremiere) => {
+                  const premier = JSON.parse(JSON.stringify(dataPremiere));
+                  const studioName = premier.studio;
+                  premier.times.forEach((dataTime) => {
+                    client.query(
+                      instertStudios,
+                      [movie_id, studioName, dataTime],
+                      (err, resStudios) => {
+                        // console.log("tsm");
+                        if (shouldAbort(err)) return;
+                        // console.log("tsm selesai");
+                      }
+                    );
+                  });
+                });
+                client.query("COMMIT", (err) => {
+                  if (err) {
+                    console.error("Error committing transaction", err.stack);
+                    resolve(systemError());
+                  }
+                  const query = `select m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast, s.name as studios, t.times as time from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
+                  join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id  join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id where m.id = $1`;
+                  db.query(query, [movie_id], (err, result) => {
+                    if (err) {
+                      console.log(err.message);
+                      resolve(systemError());
+                    }
+                    //   console.log(result);
+                    let id = null;
+                    let name = null;
+                    let image = null;
+                    let relase_date = null;
+                    let duration = null;
+                    let synopsis = null;
+                    let director = null;
+                    let category = [];
+                    let cast = [];
+                    let showtimes = [];
+                    result.rows.forEach((data) => {
+                      if (!category.includes(data.category))
+                        category.push(data.category);
+                      if (!cast.includes(data.cast)) cast.push(data.cast);
+                      let showdata = showtimes.find((datas) => {
+                        return datas.hasOwnProperty(data.studios);
+                      });
+                      if (!showdata) {
+                        const news = {
+                          [data.studios]: [data.time],
+                        };
+                        showtimes.push(news);
+                      }
+                      if (showdata) {
+                        showtimes.find((datas) => {
+                          if (datas.hasOwnProperty(data.studios)) {
+                            if (!datas[data.studios].includes(data.time)) {
+                              datas[data.studios].push(data.time);
+                            }
+                          }
+                        });
+                      }
+                      if (data.id !== id) id = data.id;
+                      if (data.name !== name) name = data.name;
+                      if (data.image !== image) image = data.image;
+                      if (data.relase_date !== relase_date)
+                        relase_date = data.relase_date;
+                      if (data.duration !== duration) duration = data.duration;
+                      if (data.synopsis !== synopsis) synopsis = data.synopsis;
+                      if (data.director !== director) director = data.director;
+                    });
+                    const data = {
+                      id,
+                      name,
+                      image,
+                      relase_date,
+                      duration,
+                      synopsis,
+                      director,
+                      category,
+                      cast,
+                      showtimes,
+                    };
+                    resolve(created(data));
+                    done();
+                  });
+                });
+              }
+            );
+          }
+        );
+      });
+    });
+  });
+};
+
+const deleteMovie = (id) => {
+  return new Promise((resolve) => {
+    const queryTMS = `delete from times_studio_movies where movies_id = $1`;
+    const queryDirector = `delete from director where movies_id = $1`;
+    const queryCast = `delete from "cast" where movies_id = $1`;
+    const queryCategory = `delete from categoriey_movie where movies_id = $1`;
+    const queryMovies = `delete from movies where id = $1`;
+    db.query(queryTMS, [id], (err, resTMS) => {
+      db.query(queryDirector, [id], (err, resDir) => {
+        db.query(queryCast, [id], (err, resCast) => {
+          db.query(queryCategory, [id], (err, resCtg) => {
+            db.query(queryMovies, [id], (err, resMovies) => {
+              resolve(success(`Success Delete ID.${id}`));
+            });
+          });
+        });
+      });
+    });
+  });
+};
+
 const movieRepo = {
   getMovies,
   getallMovies,
   getShowMovies,
+  createMovie,
+  deleteMovie,
 };
 
 module.exports = movieRepo;
