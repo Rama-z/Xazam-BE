@@ -5,7 +5,7 @@ const client = require("../config/redis");
 
 const authRouter = require("./auth");
 const profileRouter = require("./profile");
-// const productRouter = require("./product");
+const movieRouter = require("./movie");
 // const promoRouter = require("./promo");
 // const reviewsRouter = require("./reviews");
 // const transactionRouter = require("./transactions");
@@ -14,7 +14,7 @@ const prefix = "/api/xazam";
 
 mainRouter.use(`${prefix}/auth`, authRouter);
 mainRouter.use(`${prefix}/profile`, profileRouter);
-// mainRouter.use(`${prefix}/product`, productRouter);
+mainRouter.use(`${prefix}/movie`, movieRouter);
 // mainRouter.use(`${prefix}/promo`, promoRouter);
 // mainRouter.use(`${prefix}/reviews`, reviewsRouter);
 // mainRouter.use(`${prefix}/transaction`, transactionRouter);
