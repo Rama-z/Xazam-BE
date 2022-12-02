@@ -5,6 +5,7 @@ const {
   created,
   custMsg,
   invalidParameter,
+  notFound,
 } = require("../helpers/templateResponse");
 
 const getMovies = (params) => {
@@ -73,15 +74,43 @@ const getMovies = (params) => {
   });
 };
 
-const getallMovies = (body) => {
+const getallMovies = (params) => {
   return new Promise((resolve) => {
-    const query = `select distinct m.id,m.name, m.image, string_agg(distinct (c."name") , ', ')category from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
-    join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id  join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name" ,s."name" ,t.times `;
+    let query = `select distinct m.id,m.name, m.image, string_agg(distinct (c."name") , ', ')category from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id`;
+    if (params.search) {
+      query += ` where lower(m.name) like lower('%${params.search}%')`;
+    }
+    if (params.category && !params.search) {
+      query += ` where cm.category_id = '${params.category}'`;
+    }
+    if (params.category && params.search) {
+      query += ` and cm.category_id = '${params.category}'`;
+    }
+    if (params.cast && !params.search) {
+      query += ` where lower(cs.name) like lower('%${params.cast}%')`;
+    }
+    if (params.cast && params.search) {
+      query += ` and lower(cs.name) like lower('%${params.cast}%')`;
+    }
+    if (params.director && !params.search) {
+      query += ` where lower(d.name) like lower('%${params.director}%')`;
+    }
+    if (params.director && params.search) {
+      query += ` and lower(d.name) like lower('%${params.director}%')`;
+    }
+    if (params.studio && !params.search) {
+      query += ` where s.id = '${params.studio}'`;
+    }
+    if (params.studio && params.search) {
+      query += ` and s.id = '${params.studio}'`;
+    }
+    query += ` group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name" ,s."name" ,t.times`;
     db.query(query, (err, results) => {
       if (err) {
         console.log(err.message);
         resolve(systemError());
       }
+      if (results.rowCount === 0) return resolve(notFound());
       resolve(success(results.rows));
     });
   });
