@@ -55,7 +55,6 @@ const errorHandler = (err, res, next) => {
       .status(500)
       .json({ status: "Internal Server Error", msg: err.message });
   }
-  console.log("Upload Success");
   next();
 };
 
