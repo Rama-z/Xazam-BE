@@ -5,7 +5,7 @@ const getMovies = async (req, res) => {
   res.status(result.statusCode).send(result);
 };
 const getallMovies = async (req, res) => {
-  const result = await moviesRepo.getallMovies();
+  const result = await moviesRepo.getallMovies(req.query);
   res.status(result.statusCode).send(result);
 };
 const getShowMovies = async (req, res) => {
