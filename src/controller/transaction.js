@@ -87,11 +87,14 @@ const createTransaction = async (req, res) => {
 };
 
 const handleMidtrans = async (req, res) => {
-  const { fraud_status, payment_type, transaction_id, order_id } = req.body;
+  const { fraud_status, payment_type, transaction_id, transaction_status } =
+    req.body;
   const status_order = fraud_status;
-  const status = "Active";
+  let status = "Active";
+  if (transaction_status === "cancel" || transaction_status === "expire")
+    status = "Canceled";
   const payment_id = payment_type;
-  const ts_id = order_id;
+  const ts_id = transaction_id;
   const result = await transactionRepo.updatePayment(
     status_order,
     status,

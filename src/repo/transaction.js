@@ -32,11 +32,14 @@ const createTransaction = (body) => {
         total_price,
         seat_id,
         tsm_id,
+        order_id,
       } = body;
       client.query("BEGIN", (err) => {
         if (shouldAbort(err)) return;
-        const queryTransaction = `insert into transaction (user_id,movie_id,payment_id,ticket_count,total_price) values ($1,$2,$3,$4,$5) RETURNING id`;
+        const transaction_id = order_id;
+        const queryTransaction = `insert into transaction (id,user_id,movie_id,payment_id,ticket_count,total_price) values ($1,$2,$3,$4,$5,$6)`;
         const valuesTransaction = [
+          transaction_id,
           user_id,
           movie_id,
           payment_id,
@@ -49,15 +52,20 @@ const createTransaction = (body) => {
           valuesTransaction,
           (err, resTransaction) => {
             if (shouldAbort(err)) return;
-            const transaction_id = resTransaction.rows[0].id;
             const queryStt = `insert into seat_studio_times(seat_id, tsm_id) values ($1,$2) RETURNING id`;
             seat_id.split(",").forEach((dataSeat) => {
               client.query(queryStt, [dataSeat, tsm_id], (err, resStt) => {
                 if (shouldAbort(err)) return;
-                const queryStp = `insert into seat_transaction_pivot(sst_id,transaction_id) values ($1,$2)`;
+                let today = new Date();
+                let dd = String(today.getDate()).padStart(2, "0");
+                let mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+                let yyyy = today.getFullYear();
+                // today = yyyy + "/" + mm + "/" + dd;
+                today = yyyy + "-" + mm + "-" + dd;
+                const queryStp = `insert into seat_transaction_pivot(sst_id,transaction_id,date) values ($1,$2,$3)`;
                 client.query(
                   queryStp,
-                  [resStt.rows[0].id, transaction_id],
+                  [resStt.rows[0].id, transaction_id, today],
                   (err, resStp) => {
                     if (shouldAbort(err)) return;
                     count += 1;
@@ -89,7 +97,7 @@ const createTransaction = (body) => {
 const updatePayment = (status_order, status, payment_id, ts_id) => {
   return new Promise((resolve, reject) => {
     let query =
-      "update transaction set status_payment = $1, status = $2,payment_id = $3 where payment_id = $4";
+      "update transaction set status_payment = $1, status = $2,payment_id = $3 where id = $4";
     db.query(
       query,
       [status_order, status, payment_id, ts_id],
