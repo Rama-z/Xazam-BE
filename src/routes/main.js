@@ -9,6 +9,7 @@ const movieRouter = require("./movie");
 const transactionRouter = require("./transaction");
 // const promoRouter = require("./promo");
 // const reviewsRouter = require("./reviews");
+const transactionRouter = require("./transaction");
 // const favoriteRouter = require("./favorite");
 const prefix = "/api/xazam";
 
@@ -18,6 +19,7 @@ mainRouter.use(`${prefix}/movie`, movieRouter);
 mainRouter.use(`${prefix}/transaction`, transactionRouter);
 // mainRouter.use(`${prefix}/promo`, promoRouter);
 // mainRouter.use(`${prefix}/reviews`, reviewsRouter);
+mainRouter.use(`${prefix}/transaction`, transactionRouter);
 // mainRouter.use(`${prefix}/favorite`, favoriteRouter);
 
 mainRouter.get("/", (req, res) => {
