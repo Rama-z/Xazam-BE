@@ -32,7 +32,9 @@ movieRoute.post(
     "director",
     "casts",
     "synopsis",
-    "showtimes"
+    "showtimes",
+    "start_show",
+    "end_show"
   ),
   (req, res, next) =>
     memoryUpload.single("image")(req, res, (err) => {
