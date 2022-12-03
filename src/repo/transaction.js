@@ -86,13 +86,13 @@ const createTransaction = (body) => {
   });
 };
 
-const updatePayment = (status_order, status, payment_id) => {
+const updatePayment = (status_order, status, payment_id, ts_id) => {
   return new Promise((resolve, reject) => {
     let query =
-      "update transaction set status_payment = $1, status = $2 where payment_id = $3";
-    postgreDb.query(
+      "update transaction set status_payment = $1, status = $2,payment_id = $3 where payment_id = $4";
+    db.query(
       query,
-      [status_order, status, payment_id],
+      [status_order, status, payment_id, ts_id],
       (error, result) => {
         if (error) {
           console.log(error);

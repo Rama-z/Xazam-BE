@@ -87,14 +87,16 @@ const createTransaction = async (req, res) => {
 };
 
 const handleMidtrans = async (req, res) => {
-  const { order_id, transaction_status } = req.body;
-  const status_order = transaction_status;
+  const { fraud_status, payment_type, transaction_id } = req.body;
+  const status_order = fraud_status;
   const status = "Active";
-  const payment_id = order_id;
+  const payment_id = payment_type;
+  const ts_id = order_id;
   const result = await transactionRepo.updatePayment(
     status_order,
     status,
-    payment_id
+    payment_id,
+    ts_id
   );
   return res.status(200).send({ message: "get checkout by id succes" });
 };
