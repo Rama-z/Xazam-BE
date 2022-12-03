@@ -10,8 +10,13 @@ const {
 
 const getMovies = (params) => {
   return new Promise((resolve) => {
-    const query = `select m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast, s.name as studios, t.times as time from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
-        join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id  join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id where m.id = $1`;
+    const query = `select m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast,
+    s.name as studios, t.times as time from movies m
+    left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
+    join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id
+    join movies_studio ms on m.id = ms.movie_id  
+    join times_studio_movies tsm on ms.id = tsm.movies_studios_id 
+    join studios s on ms.studio_id = s.id join times t on tsm.times_id = t.id where m.id = $1`;
     db.query(query, [params], (err, result) => {
       if (err) {
         console.log(err.message);
@@ -28,7 +33,9 @@ const getMovies = (params) => {
       let category = [];
       let cast = [];
       let showtimes = [];
+      console.log(result.rows);
       result.rows.forEach((data) => {
+        console.log(data);
         if (!category.includes(data.category)) category.push(data.category);
         if (!cast.includes(data.cast)) cast.push(data.cast);
         let showdata = showtimes.find((datas) => {
@@ -76,7 +83,12 @@ const getMovies = (params) => {
 
 const getallMovies = (params) => {
   return new Promise((resolve) => {
-    let query = `select distinct m.id,m.name, m.image, string_agg(distinct (c."name") , ', ')category from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id`;
+    let query = `select distinct m.id,m.name, m.image, string_agg(distinct (c."name") , ', ')category from movies m
+    left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id
+    join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id
+    join movies_studio ms on m.id = ms.movie_id  
+    join times_studio_movies tsm on ms.id = tsm.movies_studios_id 
+    join times t on tsm.times_id = t.id`;
     if (params.search) {
       query += ` where lower(m.name) like lower('%${params.search}%')`;
     }
@@ -104,7 +116,7 @@ const getallMovies = (params) => {
     if (params.studio && params.search) {
       query += ` and s.id = '${params.studio}'`;
     }
-    query += ` group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name" ,s."name" ,t.times`;
+    query += ` group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name"`;
     db.query(query, (err, results) => {
       if (err) {
         console.log(err.message);
@@ -119,7 +131,16 @@ const getallMovies = (params) => {
 const getShowMovies = (params) => {
   return new Promise((resolve) => {
     const { month } = params;
-    const query = `select distinct m.id, m.name, m.image, string_agg(distinct (c."name") , ',')category,TO_CHAR(m.relase_date , 'DD/MM/YYYY') as date from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id  join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name" ,s."name" ,t.times`;
+    const query = `
+    select distinct m.id, m.name, m.image, string_agg(distinct (c."name") , ',')category,TO_CHAR(ms.start_show  , 'DD/MM/YYYY') as start_show,
+    TO_CHAR(ms.end_show  , 'DD/MM/YYYY') as end_show from movies m
+    left join categoriey_movie cm on  m.id  = cm.movies_id
+    join category c on cm.category_id = c.id join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id
+    join movies_studio ms on m.id = ms.movie_id  
+    join times_studio_movies tsm on ms.id = tsm.movies_studios_id 
+    join times t on tsm.times_id = t.id
+    group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name",start_show,end_show
+    `;
     db.query(query, (err, results) => {
       if (err) {
         console.log(err.message);
@@ -199,6 +220,8 @@ const createMovie = (body, file, movie_id) => {
           casts,
           synopsis,
           showtimes,
+          start_show,
+          end_show,
         } = body;
         if (
           !title ||
@@ -208,7 +231,9 @@ const createMovie = (body, file, movie_id) => {
           !director ||
           !casts ||
           !synopsis ||
-          !showtimes
+          !showtimes ||
+          !start_show ||
+          !end_show
         )
           return resolve(custMsg("All data must be filled"));
         const insertMovie = `insert into movies (id,name, relase_date, duration, synopsis, image) values ($1,$2,$3,$4,$5,$6) RETURNING id`;
@@ -252,32 +277,46 @@ const createMovie = (body, file, movie_id) => {
                     }
                   );
                 });
-                const instertStudios = `insert into "times_studio_movies"(movies_id,studios_id,times_id) values ($1,$2,$3)`;
+                const insertMoviesStudio = `insert into "movies_studio"(movie_id, studio_id, start_show, end_show) values ($1,$2,$3,$4) RETURNING id`;
+                const instertStudios = `insert into "times_studio_movies"(movies_studios_id,times_id) values ($1,$2)`;
                 const objectStringArray = new Function(
                   "return [" + showtimes + "];"
                 )();
                 objectStringArray.forEach((dataPremiere) => {
                   const premier = JSON.parse(JSON.stringify(dataPremiere));
                   const studioName = premier.studio;
-                  premier.times.forEach((dataTime) => {
-                    client.query(
-                      instertStudios,
-                      [movie_id, studioName, dataTime],
-                      (err, resStudios) => {
-                        // console.log("tsm");
-                        if (shouldAbort(err)) return;
-                        // console.log("tsm selesai");
-                      }
-                    );
-                  });
+                  client.query(
+                    insertMoviesStudio,
+                    [movie_id, studioName, start_show, end_show],
+                    (err, resMS) => {
+                      if (shouldAbort(err)) return;
+                      const movies_studios_id = resMS.rows[0].id;
+                      premier.times.forEach((dataTime) => {
+                        client.query(
+                          instertStudios,
+                          [movies_studios_id, dataTime],
+                          (err, resStudios) => {
+                            // console.log("tsm");
+                            if (shouldAbort(err)) return;
+                            // console.log("tsm selesai");
+                          }
+                        );
+                      });
+                    }
+                  );
                 });
                 client.query("COMMIT", (err) => {
                   if (err) {
                     console.error("Error committing transaction", err.stack);
                     resolve(systemError());
                   }
-                  const query = `select m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast, s.name as studios, t.times as time from movies m left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
-                  join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id  join times_studio_movies tsm on m.id = tsm.movies_id  join studios s on tsm.studios_id = s.id join times t on tsm.times_id = t.id where m.id = $1`;
+                  const query = `select m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast,
+                  s.name as studios, t.times as time from movies m
+                  left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
+                  join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id
+                  join movies_studio ms on m.id = ms.movie_id  
+                  join times_studio_movies tsm on ms.id = tsm.movies_studios_id 
+                  join studios s on ms.studio_id = s.id join times t on tsm.times_id = t.id where m.id = $1`;
                   db.query(query, [movie_id], (err, result) => {
                     if (err) {
                       console.log(err.message);
