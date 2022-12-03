@@ -87,7 +87,7 @@ const createTransaction = async (req, res) => {
 };
 
 const handleMidtrans = async (req, res) => {
-  const { fraud_status, payment_type, transaction_id } = req.body;
+  const { fraud_status, payment_type, transaction_id, order_id } = req.body;
   const status_order = fraud_status;
   const status = "Active";
   const payment_id = payment_type;
