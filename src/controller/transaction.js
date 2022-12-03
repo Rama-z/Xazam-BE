@@ -105,15 +105,17 @@ const handleMidtrans = async (req, res) => {
     status_order = transaction_status;
   }
   if (transaction_status !== "pending") {
-    const payment_id = payment_type;
-    const result = await transactionRepo.updatePayment(
-      status_order,
-      status,
-      payment_id,
-      order_id
-    );
-    return res.status(200).send({ message: "get checkout by id succes" });
+    status = "waiting";
+    status_order = transaction_status;
   }
+  const payment_id = payment_type;
+  const result = await transactionRepo.updatePayment(
+    status_order,
+    status,
+    payment_id,
+    order_id
+  );
+  return res.status(200).send({ message: "get checkout by id succes" });
 };
 
 const create = async (req, res) => {
