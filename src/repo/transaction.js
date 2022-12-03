@@ -104,6 +104,8 @@ const getHistory = (queryParams) => {
   });
 };
 
+// const getSeat = ()
+
 const transactionRepo = {
   createTransaction,
   getHistory,

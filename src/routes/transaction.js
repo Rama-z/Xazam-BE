@@ -19,4 +19,5 @@ transactionRouter.post(
   ),
   create
 );
+transactionRouter.get("/history", isLogin(), getHistory);
 module.exports = transactionRouter;
