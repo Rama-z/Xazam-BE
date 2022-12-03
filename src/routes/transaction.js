@@ -9,7 +9,6 @@ const {
   handleMidtrans,
 } = require("../controller/transaction");
 
-transactionRouter.get("/history", isLogin(), getHistory);
 transactionRouter.post(
   "/create",
   isLogin(),
