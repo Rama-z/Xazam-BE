@@ -170,7 +170,14 @@ const getShowMovies = (params) => {
           if (now < endDay) nowShowing.push(data);
         }
         if (new Date() < startDay) {
-          if (now < endDay) upComing.push(data);
+          if (now < endDay) {
+            if (month) {
+              if (data.start_show.split("/")[1] === month) upComing.push(data);
+            }
+            if (!month) {
+              upComing.push(data);
+            }
+          }
         }
       });
       const senData = {
