@@ -18,7 +18,7 @@ const {
 
 const register = (body) => {
   return new Promise((resolve) => {
-    const { email, password } = body;
+    const { email, password, firstName, lastName } = body;
     const validasiEmail = `select users from users where email like $1`;
     db.query(validasiEmail, [email], (err, resEmail) => {
       if (err) {
@@ -59,8 +59,15 @@ const register = (body) => {
                 }
               );
               const query =
-                "INSERT INTO users (id, email, password, roles_id) VALUES ($1, $2, $3, $4) RETURNING id";
-              const values = [id_user, email, hashedPassword, "1"];
+                "INSERT INTO users (id, email, password, roles_id, firstname, lastname) VALUES ($1, $2, $3, $4,$5,$6) RETURNING id";
+              const values = [
+                id_user,
+                email,
+                hashedPassword,
+                "1",
+                firstName,
+                lastName,
+              ];
               db.query(query, values, (err, result) => {
                 if (err) {
                   console.log(err);

@@ -20,7 +20,8 @@ module.exports = () => {
         next();
       })
       .catch((err) => {
-        console.log(err);
+        if (err.message.includes("jwt expired"))
+          return res.status(401).json({ msg: "Jwt Expired", data: null });
         return res
           .status(401)
           .json({ msg: "You have to login first", data: null });

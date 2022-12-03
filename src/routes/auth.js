@@ -9,7 +9,11 @@ const {
   confirmPwd,
 } = require("../controller/auth");
 
-authRouter.post("/register", validate.email("email", "password"), registerUser);
+authRouter.post(
+  "/register",
+  validate.email("email", "password", "firstName", "lastName"),
+  registerUser
+);
 authRouter.post("/login", validate.email("email", "password"), loginUser);
 authRouter.delete("/logout", isLogin(), logoutUser);
 authRouter.post(

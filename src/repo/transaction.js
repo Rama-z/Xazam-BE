@@ -86,6 +86,24 @@ const createTransaction = (body) => {
   });
 };
 
+const updatePayment = (status_order, status, payment_id) => {
+  return new Promise((resolve, reject) => {
+    let query =
+      "update transaction set status_payment = $1, status = $2 where payment_id = $3";
+    postgreDb.query(
+      query,
+      [status_order, status, payment_id],
+      (error, result) => {
+        if (error) {
+          console.log(error);
+          return resolve(systemError());
+        }
+        resolve(success());
+      }
+    );
+  });
+};
+
 const getHistory = (queryParams, user_id) => {
   return new Promise((resolve) => {
     const { search, filter, sort } = queryParams;
@@ -108,11 +126,14 @@ const getHistory = (queryParams, user_id) => {
   });
 };
 
+// const getTicketDetail = ()
+
 // const getSeat = ()
 
 const transactionRepo = {
   createTransaction,
   getHistory,
+  updatePayment,
 };
 
 module.exports = transactionRepo;
