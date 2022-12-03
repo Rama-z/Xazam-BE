@@ -154,33 +154,23 @@ const getShowMovies = (params) => {
       let yyyy = today.getFullYear();
       // today = yyyy + "/" + mm + "/" + dd;
       today = dd + "/" + mm + "/" + yyyy;
+
       results.rows.some((data) => {
-        if (data.date === today) {
-          nowShowing.push(data);
-        }
-        // const monthData = data.date.split("/")[1];
-        let someday = new Date();
-        someday.setFullYear(
-          data.date.split("/")[2],
-          data.date.split("/")[1],
-          data.date.split("/")[0]
-        );
+        const startDD = data.start_show.split("/")[0];
+        const startMM = data.start_show.split("/")[1] - 1;
+        const startYY = data.start_show.split("/")[2];
+        const endDD = data.end_show.split("/")[0];
+        const endMM = data.end_show.split("/")[1] - 1;
+        const endYY = data.end_show.split("/")[2];
+        let startDay = new Date(startYY, startMM, startDD);
+        let endDay = new Date(endYY, endMM, endDD);
         let now = new Date();
-        now.setDate(now.getDate() + 1);
-        const date = now < someday;
-        if (date) {
-          if (month) {
-            if (data.date.split("/")[1] === month) {
-              nowShowing.forEach((dataNow) => {
-                if (dataNow.name !== data.name) upComing.push(data);
-              });
-            }
-          }
-          if (!month) {
-            nowShowing.forEach((dataNow) => {
-              if (dataNow.name !== data.name) upComing.push(data);
-            });
-          }
+        now.setDate(now.getDate() - 1);
+        if (new Date() > startDay) {
+          if (now < endDay) nowShowing.push(data);
+        }
+        if (new Date() < startDay) {
+          if (now < endDay) upComing.push(data);
         }
       });
       const senData = {
