@@ -89,7 +89,7 @@ const createTransaction = (body) => {
 const getHistory = (queryParams, user_id) => {
   return new Promise((resolve) => {
     const { search, filter, sort } = queryParams;
-    const query = `select t.id, m."name", s."name" as studio, u.firstname, u.lastname, t.status, TO_CHAR(t.created_at, 'MM/DD/YYYY HH12:MI') from transaction t
+    const query = `select t.id, m."name", s."name" as studio, u.firstname, u.lastname, t.status, TO_CHAR(t.created_at, 'DD/MM/YYYY HH24:MI') from transaction t
     left join movies m on t.movie_id = m.id
     full outer join seat_transaction_pivot stp on t.id = stp.transaction_id 
     full outer join seat_studio_times sst on stp.sst_id = sst.id 
