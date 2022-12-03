@@ -94,18 +94,26 @@ const handleMidtrans = async (req, res) => {
     transaction_status,
     order_id,
   } = req.body;
-  const status_order = fraud_status;
+  let status_order = fraud_status;
   let status = "Active";
-  if (transaction_status === "cancel" || transaction_status === "expire")
+  if (
+    transaction_status === "cancel" ||
+    transaction_status === "expire" ||
+    transaction_status == "deny"
+  ) {
     status = "Canceled";
-  const payment_id = payment_type;
-  const result = await transactionRepo.updatePayment(
-    status_order,
-    status,
-    payment_id,
-    order_id
-  );
-  return res.status(200).send({ message: "get checkout by id succes" });
+    status_order = transaction_status;
+  }
+  if (transaction_status !== "pending") {
+    const payment_id = payment_type;
+    const result = await transactionRepo.updatePayment(
+      status_order,
+      status,
+      payment_id,
+      order_id
+    );
+    return res.status(200).send({ message: "get checkout by id succes" });
+  }
 };
 
 const create = async (req, res) => {
