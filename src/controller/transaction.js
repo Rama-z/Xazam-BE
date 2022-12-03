@@ -6,7 +6,10 @@ const create = async (req, res) => {
 };
 
 const getHistory = async (req, res) => {
-  const result = await transactionRepo.getHistory(req.query);
+  const result = await transactionRepo.getHistory(
+    req.query,
+    req.userPayload.user_id
+  );
   res.status(result.statusCode).send(result);
 };
 

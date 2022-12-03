@@ -86,19 +86,23 @@ const createTransaction = (body) => {
   });
 };
 
-const getHistory = (queryParams) => {
+const getHistory = (queryParams, user_id) => {
   return new Promise((resolve) => {
     const { search, filter, sort } = queryParams;
-    const query = `select t.id, m."name", m.synopsis, s."name", u.firstname, u.lastname, u.image, t.status from transactions t
-    join movies m on lower(m.id) like lower(t.movie_id) 
-    join studios s on s.id = t.studio_id 
-    join users u on u.id = t.user_id 
-    where lower(u.id) like lower('%${search}%')`;
-    db.query(query, (err, result) => {
+    const query = `select t.id, m."name", s."name" as studio, u.firstname, u.lastname, t.status, TO_CHAR(t.created_at, 'MM/DD/YYYY HH12:MI') from transaction t
+    left join movies m on t.movie_id = m.id
+    full outer join seat_transaction_pivot stp on t.id = stp.transaction_id 
+    full outer join seat_studio_times sst on stp.sst_id = sst.id 
+    full outer join times_studio_movies tsm on sst.tsm_id = tsm.id 
+    join studios s on tsm.studios_id = s.id
+    join users u on t.user_id = u.id 
+    where t.user_id = $1`;
+    db.query(query, [user_id], (err, result) => {
       if (err) {
         console.log(err.message);
         resolve(systemError());
       }
+      if (result.rowCount === 0) return resolve(notFound());
       resolve(success(result.rows));
     });
   });
