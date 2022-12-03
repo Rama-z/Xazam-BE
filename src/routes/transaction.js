@@ -2,7 +2,7 @@ const transactionRouter = require("express").Router();
 const validate = require("../middlewares/validate");
 const isLogin = require("../middlewares/isLogin");
 const isAllowed = require("../middlewares/allowedRole");
-const { create } = require("../controller/transaction");
+const { create, getHistory } = require("../controller/transaction");
 
 transactionRouter.post(
   "/create",
@@ -18,4 +18,5 @@ transactionRouter.post(
   ),
   create
 );
+transactionRouter.get("/history", isLogin(), getHistory);
 module.exports = transactionRouter;

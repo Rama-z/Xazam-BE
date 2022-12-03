@@ -86,8 +86,29 @@ const createTransaction = (body) => {
   });
 };
 
+const getHistory = (queryParams) => {
+  return new Promise((resolve) => {
+    const { search, filter, sort } = queryParams;
+    const query = `select t.id, m."name", m.synopsis, s."name", u.firstname, u.lastname, u.image, t.status from transactions t
+    join movies m on lower(m.id) like lower(t.movie_id) 
+    join studios s on s.id = t.studio_id 
+    join users u on u.id = t.user_id 
+    where lower(u.id) like lower('%${search}%')`;
+    db.query(query, (err, result) => {
+      if (err) {
+        console.log(err.message);
+        resolve(systemError());
+      }
+      resolve(success(result.rows));
+    });
+  });
+};
+
+// const getSeat = ()
+
 const transactionRepo = {
   createTransaction,
+  getHistory,
 };
 
 module.exports = transactionRepo;
