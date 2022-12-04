@@ -183,6 +183,7 @@ const getallMovies = (params, hostApi) => {
               dataCount: getData.rows.length,
               next: resNext,
               prev: resPrev,
+              page: page,
               totalPage: dataNext,
               data: res.rows,
             };
