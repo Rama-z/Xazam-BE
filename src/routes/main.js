@@ -6,7 +6,6 @@ const client = require("../config/redis");
 const authRouter = require("./auth");
 const profileRouter = require("./profile");
 const movieRouter = require("./movie");
-const transactionRouter = require("./transaction");
 // const promoRouter = require("./promo");
 // const reviewsRouter = require("./reviews");
 const transactionRouter = require("./transaction");
