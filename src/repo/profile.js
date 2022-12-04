@@ -83,9 +83,48 @@ const getProfile = (token) => {
   });
 };
 
+const editPassword = (body, token) => {
+  return new Promise((resolve, reject) => {
+    const { password, new_password } = body;
+    const getPwdQuery = "SELECT password FROM users WHERE id = $1";
+    const getPwdValues = [token.user_id];
+    db.query(getPwdQuery, getPwdValues, (err, response) => {
+      if (err) {
+        console.log(err);
+        return resolve(systemError());
+      }
+      const hashedPassword = response.rows[0].password;
+      bcrypt.compare(password, hashedPassword, (err, isSame) => {
+        if (err) {
+          console.log(err);
+          return resolve(systemError());
+        }
+        if (!isSame) return resolve(custMsg("Password is wrong"));
+        bcrypt.hash(new_password, 10, (err, newHashedPassword) => {
+          if (err) {
+            console.log(err);
+            return resolve(systemError());
+          }
+          const editPwdQuery =
+            "UPDATE users SET password = $1, updated_at = now() WHERE id = $2";
+          const editPwdValues = [newHashedPassword, token.user_id];
+          db.query(editPwdQuery, editPwdValues, (err, response) => {
+            if (err) {
+              console.log(err);
+              return resolve(systemError());
+            }
+            return resolve(success(null));
+          });
+        });
+      });
+    });
+  });
+};
+
 const profileRepo = {
   editPorfile,
   getProfile,
+  editPassword,
 };
 
 module.exports = profileRepo;
