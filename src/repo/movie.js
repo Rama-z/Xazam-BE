@@ -90,8 +90,9 @@ const getMovies = (params) => {
   });
 };
 
-const getallMovies = (params) => {
+const getallMovies = (params, hostApi) => {
   return new Promise((resolve) => {
+    let link = `${hostApi}/api/v1/product?`;
     let query = `select distinct m.id,m.name, m.image, string_agg(distinct (c."name") , ', ')category from movies m
     left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id
     join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id
@@ -100,40 +101,104 @@ const getallMovies = (params) => {
     join times t on tsm.times_id = t.id`;
     if (params.search) {
       query += ` where lower(m.name) like lower('%${params.search}%')`;
+      link += `search=${params.search}&`;
     }
     if (params.category && !params.search) {
       query += ` where cm.category_id = '${params.category}'`;
+      link += `category=${params.category}&`;
     }
     if (params.category && params.search) {
       query += ` and cm.category_id = '${params.category}'`;
+      link += `search=${params.search}&category=${params.category}`;
     }
     if (params.cast && !params.search) {
       query += ` where lower(cs.name) like lower('%${params.cast}%')`;
+      link += `cast=${params.cast}`;
     }
     if (params.cast && params.search) {
       query += ` and lower(cs.name) like lower('%${params.cast}%')`;
+      link += `search=${params.search}&cast=${params.cast}`;
     }
     if (params.director && !params.search) {
       query += ` where lower(d.name) like lower('%${params.director}%')`;
+      link += `director=${params.director}`;
     }
     if (params.director && params.search) {
       query += ` and lower(d.name) like lower('%${params.director}%')`;
+      link += `search=${params.search}&director=${params.director}`;
     }
     if (params.studio && !params.search) {
       query += ` where s.id = '${params.studio}'`;
+      link += `studio=${params.studio}`;
     }
     if (params.studio && params.search) {
       query += ` and s.id = '${params.studio}'`;
+      link += `search=${params.search}&studio=${params.studio}`;
     }
     query += ` group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name"`;
-    db.query(query, (err, results) => {
-      if (err) {
-        console.log(err.message);
-        resolve(systemError());
+    let values = [];
+    if (params.page && params.limit) {
+      let page = parseInt(params.page);
+      let limit = parseInt(params.limit);
+      let offset = (page - 1) * limit;
+      query += ` limit $1 offset $2`;
+      values.push(limit, offset);
+    }
+    db.query(
+      `select distinct m.id,m.name, m.image, string_agg(distinct (c."name") , ', ')category from movies m
+      left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id
+      join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id
+      join movies_studio ms on m.id = ms.movie_id  
+      join times_studio_movies tsm on ms.id = tsm.movies_studios_id 
+      join times t on tsm.times_id = t.id group by m.id,m.name, m.image,m.relase_date,m.duration,m.synopsis ,d."name"`,
+      (err, getData) => {
+        db.query(query, values, (err, res) => {
+          if (err) {
+            console.log(err.message);
+            resolve(systemError());
+          }
+          if (res.rowCount === 0) return resolve(notFound());
+          if (res.rows.length === 0) return resolve(notFound());
+          let resNext = null;
+          let resPrev = null;
+          if (params.page && params.limit) {
+            let page = parseInt(params.page);
+            let limit = parseInt(params.limit);
+            let start = (page - 1) * limit;
+            let end = page * limit;
+            let dataNext = Math.ceil(getData.rowCount / limit);
+            if (start <= getData.rowCount) {
+              next = page + 1;
+            }
+            if (end > 0) {
+              prev = page - 1;
+            }
+            if (parseInt(next) <= parseInt(dataNext)) {
+              resNext = `${link}page=${next}&limit=${limit}`;
+            }
+            if (parseInt(prev) !== 0) {
+              resPrev = `${link}page=${prev}&limit=${limit}`;
+            }
+            let sendResponse = {
+              dataCount: getData.rows.length,
+              next: resNext,
+              prev: resPrev,
+              totalPage: dataNext,
+              data: res.rows,
+            };
+            return resolve(success(sendResponse));
+          }
+          let sendResponse = {
+            dataCount: getData.rows.length,
+            next: resNext,
+            prev: resPrev,
+            totalPage: null,
+            data: res.rows,
+          };
+          resolve(success(sendResponse));
+        });
       }
-      if (results.rowCount === 0) return resolve(notFound());
-      resolve(success(results.rows));
-    });
+    );
   });
 };
 
