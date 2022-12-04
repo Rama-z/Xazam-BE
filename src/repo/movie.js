@@ -10,8 +10,8 @@ const {
 
 const getMovies = (params) => {
   return new Promise((resolve) => {
-    const query = `select m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast,
-    s.name as studios, t.times as time from movies m
+    const query = `select distinct on (t.id,s.id ) m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast,
+    s.id as studio_id,s.name as studios,t.id as id_times, t.times as time,tsm.id as tsm_id from movies m
     left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
     join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id
     join movies_studio ms on m.id = ms.movie_id  
@@ -33,9 +33,7 @@ const getMovies = (params) => {
       let category = [];
       let cast = [];
       let showtimes = [];
-      console.log(result.rows);
       result.rows.forEach((data) => {
-        console.log(data);
         if (!category.includes(data.category)) category.push(data.category);
         if (!cast.includes(data.cast)) cast.push(data.cast);
         let showdata = showtimes.find((datas) => {
@@ -43,7 +41,14 @@ const getMovies = (params) => {
         });
         if (!showdata) {
           const news = {
-            [data.studios]: [data.time],
+            studio_id: data.studio_id,
+            [data.studios]: [
+              {
+                tsm_id: data.tsm_id,
+                id_time: data.id_times,
+                time: data.time,
+              },
+            ],
           };
           showtimes.push(news);
         }
@@ -51,7 +56,11 @@ const getMovies = (params) => {
           showtimes.find((datas) => {
             if (datas.hasOwnProperty(data.studios)) {
               if (!datas[data.studios].includes(data.time)) {
-                datas[data.studios].push(data.time);
+                datas[data.studios].push({
+                  tsm_id: data.tsm_id,
+                  id_time: data.id_times,
+                  time: data.time,
+                });
               }
             }
           });

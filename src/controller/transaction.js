@@ -87,13 +87,7 @@ const createTransaction = async (req, res) => {
 };
 
 const handleMidtrans = async (req, res) => {
-  const {
-    fraud_status,
-    payment_type,
-    transaction_id,
-    transaction_status,
-    order_id,
-  } = req.body;
+  const { fraud_status, payment_type, transaction_status, order_id } = req.body;
   let status_order = fraud_status;
   let status = "Active";
   if (
@@ -140,6 +134,7 @@ const getSelectSeat = async (req, res) => {
   const result = await transactionRepo.getSelectSeat();
   res.status(result.statusCode).send(result);
 };
+
 const transactionController = {
   createTransaction,
   getHistory,
