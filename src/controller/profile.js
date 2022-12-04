@@ -14,9 +14,15 @@ const getProfile = async (req, res) => {
   res.status(result.statusCode).send(result);
 };
 
+const editPwd = async (req, res) => {
+  const result = await profileRepo.editPassword(req.body, req.userPayload);
+  res.status(result.statusCode).send(result);
+};
+
 const profileControllers = {
   editProfile,
   getProfile,
+  editPwd,
 };
 
 module.exports = profileControllers;

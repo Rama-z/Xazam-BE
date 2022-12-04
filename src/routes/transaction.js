@@ -1,12 +1,13 @@
 const transactionRouter = require("express").Router();
 const validate = require("../middlewares/validate");
 const isLogin = require("../middlewares/isLogin");
-const isAllowed = require("../middlewares/allowedRole");
 const {
-  create,
   getHistory,
   createTransaction,
   handleMidtrans,
+  getAllSeat,
+  getSelectSeat,
+  getTicketDetail,
 } = require("../controller/transaction");
 
 transactionRouter.post(
@@ -19,10 +20,19 @@ transactionRouter.post(
     "total_price",
     "seat_id",
     "tsm_id",
-    "payment_method"
+    "payment_method",
+    "date"
   ),
   createTransaction
 );
 transactionRouter.post("/handlemidtrans", handleMidtrans);
 transactionRouter.get("/history", isLogin(), getHistory);
+transactionRouter.get("/allseat", isLogin(), getAllSeat);
+transactionRouter.get("/selectseat", isLogin(), getSelectSeat);
+transactionRouter.get(
+  "/ticket-detail/:id",
+  isLogin(),
+  validate.params("id"),
+  getTicketDetail
+);
 module.exports = transactionRouter;

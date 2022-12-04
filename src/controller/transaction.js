@@ -87,19 +87,27 @@ const createTransaction = async (req, res) => {
 };
 
 const handleMidtrans = async (req, res) => {
-  const { fraud_status, payment_type, transaction_id, transaction_status } =
-    req.body;
-  const status_order = fraud_status;
+  const { fraud_status, payment_type, transaction_status, order_id } = req.body;
+  let status_order = fraud_status;
   let status = "Active";
-  if (transaction_status === "cancel" || transaction_status === "expire")
+  if (
+    transaction_status === "cancel" ||
+    transaction_status === "expire" ||
+    transaction_status == "deny"
+  ) {
     status = "Canceled";
+    status_order = transaction_status;
+  }
+  if (transaction_status !== "pending") {
+    status = "waiting";
+    status_order = transaction_status;
+  }
   const payment_id = payment_type;
-  const ts_id = transaction_id;
   const result = await transactionRepo.updatePayment(
     status_order,
     status,
     payment_id,
-    ts_id
+    order_id
   );
   return res.status(200).send({ message: "get checkout by id succes" });
 };
@@ -117,10 +125,31 @@ const getHistory = async (req, res) => {
   res.status(result.statusCode).send(result);
 };
 
+const getAllSeat = async (req, res) => {
+  const result = await transactionRepo.getallSeat();
+  res.status(result.statusCode).send(result);
+};
+
+const getSelectSeat = async (req, res) => {
+  const result = await transactionRepo.getSelectSeat();
+  res.status(result.statusCode).send(result);
+};
+
+const getTicketDetail = async (req, res) => {
+  const result = await transactionRepo.getTicketDetail(
+    req.params.id,
+    req.userPayload.user_id
+  );
+  res.status(result.statusCode).send(result);
+};
+
 const transactionController = {
   createTransaction,
   getHistory,
   handleMidtrans,
+  getAllSeat,
+  getSelectSeat,
+  getTicketDetail,
 };
 
 module.exports = transactionController;
