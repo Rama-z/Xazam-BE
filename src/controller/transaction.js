@@ -131,10 +131,21 @@ const getHistory = async (req, res) => {
   res.status(result.statusCode).send(result);
 };
 
+const getAllSeat = async (req, res) => {
+  const result = await transactionRepo.getallSeat();
+  res.status(result.statusCode).send(result);
+};
+
+const getSelectSeat = async (req, res) => {
+  const result = await transactionRepo.getSelectSeat();
+  res.status(result.statusCode).send(result);
+};
 const transactionController = {
   createTransaction,
   getHistory,
   handleMidtrans,
+  getAllSeat,
+  getSelectSeat,
 };
 
 module.exports = transactionController;

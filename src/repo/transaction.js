@@ -137,12 +137,47 @@ const getHistory = (queryParams, user_id) => {
 
 // const getTicketDetail = ()
 
-// const getSeat = ()
+const getallSeat = () => {
+  return new Promise((resolve) => {
+    let query = `select id, seat from seat`;
+    db.query(query, (err, resSeat) => {
+      if (err) {
+        console.log(err.message);
+        resolve(systemError());
+      }
+      resolve(success(resSeat.rows));
+    });
+  });
+};
+
+const getSelectSeat = () => {
+  return new Promise((resolve) => {
+    let query = `select s.id, s.seat from seat s 
+    left join seat_studio_times sst on s.id = sst.seat_id 
+    join seat_transaction_pivot stp on sst.id = stp.sst_id 
+    where stp."date" = $1
+    group by s.id, s.seat`;
+    let today = new Date();
+    let dd = String(today.getDate()).padStart(2, "0");
+    let mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+    let yyyy = today.getFullYear();
+    today = yyyy + "-" + mm + "-" + dd;
+    db.query(query, [today], (err, restSelect) => {
+      if (err) {
+        console.log(err.message);
+        resolve(systemError());
+      }
+      resolve(success(restSelect.rows));
+    });
+  });
+};
 
 const transactionRepo = {
   createTransaction,
   getHistory,
   updatePayment,
+  getallSeat,
+  getSelectSeat,
 };
 
 module.exports = transactionRepo;

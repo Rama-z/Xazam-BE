@@ -7,6 +7,8 @@ const {
   getHistory,
   createTransaction,
   handleMidtrans,
+  getAllSeat,
+  getSelectSeat,
 } = require("../controller/transaction");
 
 transactionRouter.post(
@@ -25,4 +27,6 @@ transactionRouter.post(
 );
 transactionRouter.post("/handlemidtrans", handleMidtrans);
 transactionRouter.get("/history", isLogin(), getHistory);
+transactionRouter.get("/getseat", isLogin(), getAllSeat);
+transactionRouter.get("/getselectseat", isLogin(), getSelectSeat);
 module.exports = transactionRouter;
