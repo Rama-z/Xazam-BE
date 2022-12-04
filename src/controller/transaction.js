@@ -135,12 +135,21 @@ const getSelectSeat = async (req, res) => {
   res.status(result.statusCode).send(result);
 };
 
+const getTicketDetail = async (req, res) => {
+  const result = await transactionRepo.getTicketDetail(
+    req.params.id,
+    req.userPayload.user_id
+  );
+  res.status(result.statusCode).send(result);
+};
+
 const transactionController = {
   createTransaction,
   getHistory,
   handleMidtrans,
   getAllSeat,
   getSelectSeat,
+  getTicketDetail,
 };
 
 module.exports = transactionController;

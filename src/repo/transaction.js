@@ -4,6 +4,7 @@ const {
   notFound,
   systemError,
   created,
+  forbiddenAccess,
 } = require("../helpers/templateResponse");
 const db = require("../config/database");
 
@@ -37,11 +38,10 @@ const createTransaction = (body) => {
       client.query("BEGIN", (err) => {
         if (shouldAbort(err)) return;
         const transaction_id = order_id;
-        const queryTransaction = `insert into transaction (id,user_id,movie_id,payment_id,ticket_count,total_price) values ($1,$2,$3,$4,$5,$6)`;
+        const queryTransaction = `insert into transaction (id,user_id,payment_id,ticket_count,total_price) values ($1,$2,$3,$4,$5)`;
         const valuesTransaction = [
           transaction_id,
           user_id,
-          movie_id,
           payment_id,
           ticket_count,
           total_price,
@@ -115,12 +115,12 @@ const updatePayment = (status_order, status, payment_id, ts_id) => {
 const getHistory = (queryParams, user_id) => {
   return new Promise((resolve) => {
     const { search, filter, sort } = queryParams;
-    const query = `select distinct on (t.id) t.id, m."name", s."name" as studio, u.firstname, u.lastname, t.status, TO_CHAR(t.created_at, 'DD/MM/YYYY HH24:MI')time_transaction from transaction t
-    left join movies m on t.movie_id = m.id
+    const query = `select distinct on (t.id ) t.id, m."name", s."name" as studio, u.firstname, u.lastname, t.status, TO_CHAR(t.created_at, 'DD/MM/YYYY HH24:MI')time_transaction from transaction t
     full outer join seat_transaction_pivot stp on t.id = stp.transaction_id 
     full outer join seat_studio_times sst on stp.sst_id = sst.id 
-    join movies_studio ms on m.id = ms.movie_id  
-    join times_studio_movies tsm on ms.id = tsm.movies_studios_id 
+    join times_studio_movies tsm on sst.tsm_id  = tsm.id 
+    join movies_studio ms on tsm.movies_studios_id = ms.id 
+    join movies m on ms.movie_id = m.id
     join studios s on ms.studio_id = s.id
     join users u on t.user_id = u.id 
     where t.user_id = $1`;
@@ -135,7 +135,29 @@ const getHistory = (queryParams, user_id) => {
   });
 };
 
-// const getTicketDetail = ()
+const getTicketDetail = (transaction_id, users_id) => {
+  return new Promise((resolve) => {
+    let query = `select distinct on (t.id ) t.id, t.user_id,m."name" as title_movie, s."name" as studio, t.ticket_count,string_agg(distinct (s2.seat) , ', ')seats, t.total_price as price ,TO_CHAR(t.created_at, 'DD') as date,TO_CHAR(t.created_at, 'MM') as month,TO_CHAR(t.created_at, 'HH24:MI') as time from transaction t
+    full outer join seat_transaction_pivot stp on t.id = stp.transaction_id 
+    full outer join seat_studio_times sst on stp.sst_id = sst.id 
+    join times_studio_movies tsm on sst.tsm_id  = tsm.id 
+    join movies_studio ms on tsm.movies_studios_id = ms.id 
+    join movies m on ms.movie_id = m.id
+    join studios s on ms.studio_id = s.id
+    join seat s2 on sst.seat_id = s2.id
+    join users u on t.user_id = u.id 
+    where t.id = $1
+    group by t.id, t.user_id,title_movie, studio, t.ticket_count, price, t.created_at `;
+    db.query(query, [transaction_id], (err, results) => {
+      if (err) {
+        console.log(err.message);
+        resolve(systemError());
+      }
+      if (results.rows[0].user_id !== users_id) resolve(forbiddenAccess());
+      resolve(success(results.rows[0]));
+    });
+  });
+};
 
 const getallSeat = () => {
   return new Promise((resolve) => {
@@ -178,6 +200,7 @@ const transactionRepo = {
   updatePayment,
   getallSeat,
   getSelectSeat,
+  getTicketDetail,
 };
 
 module.exports = transactionRepo;
