@@ -20,7 +20,8 @@ transactionRouter.post(
     "total_price",
     "seat_id",
     "tsm_id",
-    "payment_method"
+    "payment_method",
+    "date"
   ),
   createTransaction
 );

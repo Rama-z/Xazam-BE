@@ -34,6 +34,7 @@ const createTransaction = (body) => {
         seat_id,
         tsm_id,
         order_id,
+        date_watch,
       } = body;
       client.query("BEGIN", (err) => {
         if (shouldAbort(err)) return;
@@ -45,6 +46,7 @@ const createTransaction = (body) => {
           payment_id,
           ticket_count,
           total_price,
+          date_watch,
         ];
         let count = 0;
         client.query(
@@ -65,7 +67,7 @@ const createTransaction = (body) => {
                 const queryStp = `insert into seat_transaction_pivot(sst_id,transaction_id,date) values ($1,$2,$3)`;
                 client.query(
                   queryStp,
-                  [resStt.rows[0].id, transaction_id, today],
+                  [resStt.rows[0].id, transaction_id, date_watch],
                   (err, resStp) => {
                     if (shouldAbort(err)) return;
                     count += 1;
@@ -115,7 +117,7 @@ const updatePayment = (status_order, status, payment_id, ts_id) => {
 const getHistory = (queryParams, user_id) => {
   return new Promise((resolve) => {
     const { search, filter, sort } = queryParams;
-    const query = `select distinct on (t.id ) t.id, m."name", s."name" as studio, u.firstname, u.lastname, t.status, TO_CHAR(t.created_at, 'DD/MM/YYYY HH24:MI')time_transaction from transaction t
+    const query = `select distinct on (t.id ) t.id, m."name", s."name" as studio, u.firstname, u.lastname, t.status, TO_CHAR(stp."date", 'DD/MM/YYYY')date_transaction, TO_CHAR(t2."times" , 'HH24:MI') as time_transaction from transaction t
     full outer join seat_transaction_pivot stp on t.id = stp.transaction_id 
     full outer join seat_studio_times sst on stp.sst_id = sst.id 
     join times_studio_movies tsm on sst.tsm_id  = tsm.id 
@@ -123,6 +125,7 @@ const getHistory = (queryParams, user_id) => {
     join movies m on ms.movie_id = m.id
     join studios s on ms.studio_id = s.id
     join users u on t.user_id = u.id 
+    join times t2 on tsm.times_id = t2.id 
     where t.user_id = $1`;
     db.query(query, [user_id], (err, result) => {
       if (err) {
@@ -137,7 +140,7 @@ const getHistory = (queryParams, user_id) => {
 
 const getTicketDetail = (transaction_id, users_id) => {
   return new Promise((resolve) => {
-    let query = `select distinct on (t.id ) t.id, t.user_id,m."name" as title_movie, s."name" as studio, t.ticket_count,string_agg(distinct (s2.seat) , ', ')seats, t.total_price as price ,TO_CHAR(t.created_at, 'DD') as date,TO_CHAR(t.created_at, 'MM') as month,TO_CHAR(t.created_at, 'HH24:MI') as time from transaction t
+    let query = `select distinct on (t.id ) t.id, t.user_id, m."name" as title_movie, s."name" as studio, t.ticket_count,string_agg(distinct (s2.seat) , ', ')seats, t.total_price as price ,TO_CHAR(stp."date" , 'DD') as date,TO_CHAR(stp."date" , 'MM') as month,TO_CHAR(t2."times" , 'HH24:MI') as time from transaction t
     full outer join seat_transaction_pivot stp on t.id = stp.transaction_id 
     full outer join seat_studio_times sst on stp.sst_id = sst.id 
     join times_studio_movies tsm on sst.tsm_id  = tsm.id 
@@ -145,9 +148,10 @@ const getTicketDetail = (transaction_id, users_id) => {
     join movies m on ms.movie_id = m.id
     join studios s on ms.studio_id = s.id
     join seat s2 on sst.seat_id = s2.id
-    join users u on t.user_id = u.id 
+    join users u on t.user_id = u.id
+    join times t2 on tsm.times_id = t2.id 
     where t.id = $1
-    group by t.id, t.user_id,title_movie, studio, t.ticket_count, price, t.created_at `;
+    group by t.id, t.user_id, title_movie, studio, t.ticket_count, price, stp."date" , t2."times" `;
     db.query(query, [transaction_id], (err, results) => {
       if (err) {
         console.log(err.message);
