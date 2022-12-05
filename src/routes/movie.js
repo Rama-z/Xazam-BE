@@ -11,8 +11,10 @@ const {
   getShowMovies,
   createMovie,
   deleteMovie,
+  getStudios,
 } = require("../controller/movie");
 
+movieRoute.get("/studio", getStudios);
 movieRoute.get("/movie-detail/:id", getMovies);
 movieRoute.get(
   "/",

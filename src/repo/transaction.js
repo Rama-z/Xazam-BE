@@ -132,7 +132,7 @@ const getHistory = (queryParams, user_id) => {
         console.log(err.message);
         resolve(systemError());
       }
-      if (result.rowCount === 0) return resolve(notFound());
+      if (result?.rowCount === 0) return resolve(notFound());
       resolve(success(result.rows));
     });
   });
