@@ -352,8 +352,9 @@ const createMovie = (body, file, movie_id) => {
                 const insertMoviesStudio = `insert into "movies_studio"(movie_id, studio_id, start_show, end_show) values ($1,$2,$3,$4) RETURNING id`;
                 const instertStudios = `insert into "times_studio_movies"(movies_studios_id,times_id) values ($1,$2)`;
                 const objectStringArray = new Function(
-                  "return [" + showtimes + "];"
+                  "return" + showtimes + ""
                 )();
+                console.log(objectStringArray);
                 objectStringArray.forEach((dataPremiere) => {
                   const premier = JSON.parse(JSON.stringify(dataPremiere));
                   const studioName = premier.studio;
@@ -363,7 +364,7 @@ const createMovie = (body, file, movie_id) => {
                     (err, resMS) => {
                       if (shouldAbort(err)) return;
                       const movies_studios_id = resMS.rows[0].id;
-                      premier.times.forEach((dataTime) => {
+                      dataPremiere.times.forEach((dataTime) => {
                         client.query(
                           instertStudios,
                           [movies_studios_id, dataTime],
