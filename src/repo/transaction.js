@@ -46,7 +46,6 @@ const createTransaction = (body) => {
           payment_id,
           ticket_count,
           total_price,
-          date_watch,
         ];
         let count = 0;
         client.query(
