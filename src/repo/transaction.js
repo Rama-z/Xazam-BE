@@ -116,7 +116,7 @@ const updatePayment = (status_order, status, payment_id, ts_id) => {
 const getHistory = (queryParams, user_id) => {
   return new Promise((resolve) => {
     const { search, filter, sort } = queryParams;
-    const query = `select distinct on (t.id ) t.id, m."name", s."name" as studio, u.firstname, u.lastname, t.status, TO_CHAR(stp."date", 'DD/MM/YYYY')date_transaction, TO_CHAR(t2."times" , 'HH24:MI') as time_transaction from transaction t
+    const query = `select distinct on (t.id ) t.id, m."name", s."name" as studio,s.image as image_studio, u.firstname, u.lastname, t.status, TO_CHAR(stp."date", 'DD/MM/YYYY')date_transaction, TO_CHAR(t2."times" , 'HH24:MI') as time_transaction from transaction t
     full outer join seat_transaction_pivot stp on t.id = stp.transaction_id 
     full outer join seat_studio_times sst on stp.sst_id = sst.id 
     join times_studio_movies tsm on sst.tsm_id  = tsm.id 
@@ -139,7 +139,7 @@ const getHistory = (queryParams, user_id) => {
 
 const getTicketDetail = (transaction_id, users_id) => {
   return new Promise((resolve) => {
-    let query = `select distinct on (t.id ) t.id, t.user_id, m."name" as title_movie, s."name" as studio, t.ticket_count,string_agg(distinct (s2.seat) , ', ')seats, t.total_price as price ,TO_CHAR(stp."date" , 'DD') as date,TO_CHAR(stp."date" , 'MM') as month,TO_CHAR(t2."times" , 'HH24:MI') as time from transaction t
+    let query = `select distinct on (t.id ) t.id, t.user_id, m."name" as title_movie, s."name" as studio,s.image as image_studio, t.ticket_count,string_agg(distinct (s2.seat) , ', ')seats, t.total_price as price ,TO_CHAR(stp."date" , 'DD') as date,TO_CHAR(stp."date" , 'MM') as month,TO_CHAR(t2."times" , 'HH24:MI') as time from transaction t
     full outer join seat_transaction_pivot stp on t.id = stp.transaction_id 
     full outer join seat_studio_times sst on stp.sst_id = sst.id 
     join times_studio_movies tsm on sst.tsm_id  = tsm.id 
@@ -150,7 +150,7 @@ const getTicketDetail = (transaction_id, users_id) => {
     join users u on t.user_id = u.id
     join times t2 on tsm.times_id = t2.id 
     where t.id = $1
-    group by t.id, t.user_id, title_movie, studio, t.ticket_count, price, stp."date" , t2."times" `;
+    group by t.id, t.user_id, title_movie, studio, image_studio,t.ticket_count, price, stp."date" , t2."times" `;
     db.query(query, [transaction_id], (err, results) => {
       if (err) {
         console.log(err.message);
