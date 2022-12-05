@@ -10,7 +10,7 @@ const {
 
 const getMovies = (params) => {
   return new Promise((resolve) => {
-    const query = `select distinct on (t.id,s.id ) m.id, m.name, m.image , m.relase_date , m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast,
+    const query = `select distinct on (t.id,s.id ) m.id, m.name, m.image , TO_CHAR(m.relase_date, 'DD/MM/YYYY')relase_date, m.duration, m.synopsis, c."name" as category, d.name as director, cs."name" as cast,
     s.id as studio_id,s.name as studios,t.id as id_times, t.times as time,tsm.id as tsm_id from movies m
     left join categoriey_movie cm on  m.id  = cm.movies_id join category c on cm.category_id = c.id 
     join director d on m.id = d.movies_id join "cast" cs on m.id = cs.movies_id
@@ -68,7 +68,26 @@ const getMovies = (params) => {
         if (data.id !== id) id = data.id;
         if (data.name !== name) name = data.name;
         if (data.image !== image) image = data.image;
-        if (data.relase_date !== relase_date) relase_date = data.relase_date;
+        if (data.relase_date !== relase_date) {
+          let month = "";
+          const DD = data.relase_date.split("/")[0];
+          const MM = data.relase_date.split("/")[1];
+          const YY = data.relase_date.split("/")[2];
+          if (MM === "1") month = "January";
+          if (MM === "2") month = "February";
+          if (MM === "3") month = "March";
+          if (MM === "4") month = "April";
+          if (MM === "5") month = "Mei";
+          if (MM === "6") month = "June";
+          if (MM === "7") month = "July";
+          if (MM === "8") month = "Agustus";
+          if (MM === "9") month = "September";
+          if (MM === "10") month = "October";
+          if (MM === "11") month = "November";
+          if (MM === "12") month = "December";
+          let sendDate = `${month} ${DD}, ${YY}`;
+          relase_date = sendDate;
+        }
         if (data.duration !== duration) duration = data.duration;
         if (data.synopsis !== synopsis) synopsis = data.synopsis;
         if (data.director !== director) director = data.director;
