@@ -108,11 +108,13 @@ Click here [POSTMAN](https://documenter.getpostman.com/view/23707233/2s8Yt1rp93)
 ## 𓆙 Contributor
   <table>
     <tr>
-      <td style="display: flex; gap:1rem">
+      <td >
         <a href="https://github.com/salzteam">
           <img width="100" src="https://media.discordapp.net/attachments/1042328276623966313/1044211472001138799/A5EA7BEF-0326-4ED0-A439-A64A680A774B.jpg?width=250&height=250" alt=""><br/>
           <center><sub><b>Akshal </b></sub></center>
         </a>
+        </td>
+      <td style="display: flex; gap:1rem">
         <a href="https://github.com/salzteam">
           <img width="100" src="https://avatars.githubusercontent.com/u/105290499?v=4?width=500&height=1000" alt=""><br/>
           <center><sub><b>Zanuar </b></sub></center>
