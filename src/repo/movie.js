@@ -482,12 +482,23 @@ const deleteMovie = (id) => {
   });
 };
 
+const getStudios = () => {
+  return new Promise((resolve) => {
+    const query = "select * from studios";
+    db.query(query, (err, result) => {
+      if (err) resolve(systemError());
+      resolve(success(result.rows));
+    });
+  });
+};
+
 const movieRepo = {
   getMovies,
   getallMovies,
   getShowMovies,
   createMovie,
   deleteMovie,
+  getStudios,
 };
 
 module.exports = movieRepo;

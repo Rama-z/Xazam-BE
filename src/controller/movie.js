@@ -23,12 +23,18 @@ const deleteMovie = async (req, res) => {
   res.status(result.statusCode).send(result);
 };
 
+const getStudios = async (req, res) => {
+  const result = await moviesRepo.getStudios();
+  res.status(result.statusCode).send(result);
+};
+
 const moviesController = {
   getMovies,
   getallMovies,
   getShowMovies,
   createMovie,
   deleteMovie,
+  getStudios,
 };
 
 module.exports = moviesController;
