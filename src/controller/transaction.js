@@ -131,7 +131,7 @@ const getAllSeat = async (req, res) => {
 };
 
 const getSelectSeat = async (req, res) => {
-  const result = await transactionRepo.getSelectSeat();
+  const result = await transactionRepo.getSelectSeat(req.query);
   res.status(result.statusCode).send(result);
 };
 

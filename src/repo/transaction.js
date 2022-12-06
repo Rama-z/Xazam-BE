@@ -175,7 +175,7 @@ const getallSeat = () => {
   });
 };
 
-const getSelectSeat = () => {
+const getSelectSeat = (params) => {
   return new Promise((resolve) => {
     let query = `select s.id, s.seat from seat s 
     left join seat_studio_times sst on s.id = sst.seat_id 
@@ -187,7 +187,7 @@ const getSelectSeat = () => {
     let mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
     let yyyy = today.getFullYear();
     today = yyyy + "-" + mm + "-" + dd;
-    db.query(query, [today], (err, restSelect) => {
+    db.query(query, [params.date], (err, restSelect) => {
       if (err) {
         console.log(err.message);
         resolve(systemError());
