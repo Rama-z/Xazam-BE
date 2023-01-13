@@ -29,7 +29,7 @@ module.exports.sendMails = async (params) => {
           <h2>Hi.</h2>
           <h4>This Is Your Link For Change Your Password</h4>
           <p style="margin-bottom: 30px;">Need to reset your password? just click <a href="${params.link}">Here</a> to reset Password. your password</p>
-     </div>
+      </div>
       `,
     });
     return;
@@ -52,7 +52,7 @@ module.exports.sendVerifMail = async (params, pin) => {
           <h2>Hi.</h2>
           <h4>This Is Your Link Verification</h4>
           <p style="margin-bottom: 30px;">Please click <a href="${process.env.LINK_DEPLOYMENT}${params.OTP}">here</a> to verif your email</p>
-     </div>
+      </div>
       `,
     });
     return;

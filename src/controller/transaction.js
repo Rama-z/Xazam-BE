@@ -7,27 +7,6 @@ let snap = new midtransClient.Snap({
   clientKey: process.env.CLIENT_KEY_MIDTRANS,
 });
 
-// let coreApi = new midtransClient.CoreApi({
-//   isProduction: false,
-//   serverKey: process.env.SERVER_KEY_MIDTRANS,
-//   clientKey: process.env.CLIENT_KEY_MIDTRANS,
-// });
-
-// const paymentMidtrans = async (total_price, bank, payment_id) => {
-//   const parameter = {
-//     payment_type: "bank_transfer",
-//     transaction_details: {
-//       gross_amount: parseInt(total_price),
-//       order_id: payment_id,
-//       payment_link_id: "for-payment-123",
-//     },
-//     bank_transfer: {
-//       bank: bank,
-//     },
-//   };
-//   return await coreApi.charge(parameter);
-// };
-
 const createTransaction = async (req, res) => {
   const body = req.body;
   const user_id = req.userPayload.user_id;
@@ -62,22 +41,6 @@ const createTransaction = async (req, res) => {
       return transaction.redirect_url;
     });
 
-  // snap.transaction.notification(parameter).then((statusResponse) => {
-  //   let orderId = statusResponse.order_id;
-  //   let transactionStatus = statusResponse.transaction_status;
-  //   let fraudStatus = statusResponse.fraud_status;
-
-  //   console.log(
-  //     `Transaction notification received. Order ID: ${orderId}. Transaction status: ${transactionStatus}. Fraud status: ${fraudStatus}`
-  //   );
-  // });
-
-  // const midtrans = await paymentMidtrans(
-  //   body.total_price,
-  //   body.payment_method,
-  //   payment_id
-  // );
-  // let redirectUrl = midtrans.redirect_url;
   const sendData = {
     ...result,
     redirctUrl: Redirect,

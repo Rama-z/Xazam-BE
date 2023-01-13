@@ -21,6 +21,7 @@ authRouter.post(
   validate.body("email", "linkDirect"),
   resetPwd
 );
+
 authRouter.patch(
   "/reset-password",
   validate.body("pincode", "newPassword"),
